@@ -7,7 +7,7 @@
   #include <Adafruit_DPS310.h>
   #include <U8g2lib.h>
   #include <Wire.h>
-  #include <DaisyDuino.h> // Not really necessary but just in case
+//  #include <DaisyDuino.h> // Not really necessary but just in case
 
 // // Define objects 
 //   Adafruit_DPS310 dps_1;
