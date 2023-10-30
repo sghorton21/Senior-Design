@@ -1,13 +1,11 @@
 // Senior Design Code
 // I2C sensor data acquisition on Daisy Seed (STM32H7-based system)
 // Christopher Cortes
-// Last edit: 10-30-2023 9:40am - CC
+// Last edit: 10-30-2023 9:48am - CC
 
-// Include libraries
 #include <Adafruit_DPS310.h>
 #include <U8g2lib.h>
 #include <Wire.h>
-#include <DaisyDuino.h> // Not really necessary but just in case
 
 Adafruit_DPS310 altRx;
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_1(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
@@ -20,6 +18,7 @@ int SPL_ADDRESS = 0x48;
 int DB_REGISTER = 0x0A;
 
 void setup() {
+  // SPL Init
   Serial.begin(115200);
   altRx.begin_I2C(0x77, &Wire);
   altRx.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
