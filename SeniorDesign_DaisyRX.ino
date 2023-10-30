@@ -1,92 +1,68 @@
 // Senior Design Code
 // I2C sensor data acquisition on Daisy Seed (STM32H7-based system)
 // Christopher Cortes
-// 10-18-2023
+// Last edit: 10-30-2023 9:40am - CC
 
 // Include libraries
-  #include <Adafruit_DPS310.h>
-  #include <U8g2lib.h>
-  #include <Wire.h>
-//  #include <DaisyDuino.h> // Not really necessary but just in case
+#include <Adafruit_DPS310.h>
+#include <U8g2lib.h>
+#include <Wire.h>
+#include <DaisyDuino.h> // Not really necessary but just in case
 
-// // Define objects 
-//   Adafruit_DPS310 dps_1;
-  Adafruit_DPS310 altRx;
-  // U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_1(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+Adafruit_DPS310 altRx;
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_1(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
-// Define variables
-  int db;
-  float alt_ref, altitude_drone, delta_alt, spl_ground;
+int DB;
+float ALT_REF, ALT_DRONE, DELTA_ALT, SPL_DRONE, SPL_GROUND;
+float seaLevelhPa=1013.25;
+sensors_event_t temp_event, pressure_event;
+int SPL_ADDRESS = 0x48;
+int DB_REGISTER = 0x0A;
 
-  float seaLevelhPa=1013.25;
-  sensors_event_t temp_event, pressure_event;
-  // byte SPL_ADDRESS = 0X48;
-  // byte DB_REGISTER = 0X0A;
-
-// Setup function
-  void setup() {
-    // SPL Init
-    // Serial.begin(115200);
-    // Wire.begin();
-
-    // U8g2 init
-    // OLED_1.begin();
-    // OLED_1.setFont(u8g2_font_fub11_tr);
-
-    // // DPS310 init
-    // dps_1.begin_I2C(0x77, &Wire);
-    // dps_1.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
-    // dps_1.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
-
-    altRx.begin_I2C(0x77, &Wire);
-    altRx.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
-    altRx.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
+void setup() {
+  Serial.begin(115200);
+  altRx.begin_I2C(0x77, &Wire);
+  altRx.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
+  altRx.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
   }
 
 void loop() {
-  // // DPS310
-  //   dps_1.getEvents(&temp_event, &pressure_event);
-    altRx.getEvents(&temp_event, &pressure_event); // communicate with DPS310
-    alt_ref = altRx.readAltitude(seaLevelhPa);
-    // altitude_drone =  1.5*altRx.readAltitude(seaLevelhPa);
-    // delta_alt = altitude_drone - alt_ref; // store altitude
+  getAltRef();
+  getSpl();
+  SPL_GROUND = ALT_REF * SPL_DRONE;
+  Serial.print("Altitude ground = ");
+  Serial.println(ALT_REF);
+}
 
-  //SPL
+// Read ALT_REF
+float getAltRef() {
+    altRx.getEvents(&temp_event, &pressure_event); // communicate with DPS310
+    ALT_REF = altRx.readAltitude(seaLevelhPa);
+    return ALT_REF;
+}
+
+int getSpl() {
     Wire.beginTransmission(SPL_ADDRESS);
     Wire.write(DB_REGISTER); 
     Wire.endTransmission(false); 
     Wire.requestFrom(SPL_ADDRESS, 1); 
-    byte db = Wire.read();
+    byte DB = Wire.read();
+    SPL_DRONE = float(DB);
+}
 
-
-  // Calculate
-  // spl_ground = db*(sq(alt_ref / altitude_drone ));
-
-  // Print to OLED
+void printOled() {
       OLED_1.firstPage();
       do {
       OLED_1.clearDisplay();
       OLED_1.setCursor(0, 20);
       OLED_1.print("Altitude = ");
       OLED_1.setCursor(0,40);
-      OLED_1.print(alt_ref);
+      OLED_1.print(ALT_REF);
       OLED_1.print(" m");
-      // OLED_1.setCursor(0,60);
-      // OLED_1.print("SPL = ");
-      // OLED_1.print(spl_ground);
-      // OLED_1.print(" dB");
-      // } 
+      OLED_1.setCursor(0,60);
+      OLED_1.print("SPL = ");
+      OLED_1.print(SPL_GROUND);
+      OLED_1.print(" DB");
+      } 
       while (OLED_1.nextPage());
-
-  // Print to Serial Monitor
-    // Serial.print("SPL drone = ");
-    // Serial.println(db);
-    // Serial.print("Altitude drone = ");
-    // Serial.println(altitude_drone);
-    Serial.print("Altitude ground = ");
-    Serial.println(alt_ref);
-    // Serial.print("Difference = ");
-    // Serial.println(altitude_drone - alt_ref);
-    // Serial.print("SPL ground = ");
-    // Serial.println(spl_ground);
 }
