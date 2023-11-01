@@ -1,0 +1,31 @@
+#include <SPI.h>
+#include <RF24.h>
+
+RF24 radio(9, 10); // CE, CSN pins on your Arduino Micro
+
+void setup() {
+  Serial.begin(115200);
+  radio.begin();
+  radio.openWritingPipe(0xF0F0F0E1LL); // Define the transmitting pipe
+  radio.openReadingPipe(1, 0xF0F0F0E1LL); // Define the receiving pipe (same address)
+  radio.setPALevel(RF24_PA_LOW); // Set the power level
+  radio.startListening(); // Put the radio in receive mode
+
+  // Print the radio details
+  // Serial.println("Radio Details:");
+  // radio.printDetails();
+}
+
+void loop() {
+  const char text[] = "Hello, NRF24L01!";
+  radio.write(&text, sizeof(text)); // Send the data
+  Serial.println("Data Sent: " + String(text));
+
+  if (radio.available()) {
+    char receivedText[sizeof(text)];
+    radio.read(&receivedText, sizeof(receivedText)); // Read the received data
+    Serial.println("Data Received: " + String(receivedText));
+  }
+
+  delay(1000); // Wait for a moment before sending data again
+}
