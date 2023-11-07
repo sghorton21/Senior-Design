@@ -1,0 +1,63 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <Wire.h>
+#include <Adafruit_DPS310.h>  // Library for the primary pressure sensor
+
+RF24 radio(9, 10);
+const byte address[6] = "00001";
+char combinedMessage[32];
+
+Adafruit_DPS310 primarySensor;  // Create an instance of the primary pressure sensor
+
+void setup() {
+  Serial.begin(115200);
+
+  radio.begin();
+  radio.openReadingPipe(1, address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
+
+  if (!primarySensor.begin_I2C(0x77)) {
+    Serial.println("Failed to initialize the primary pressure sensor.");
+    while (1);
+  }
+}
+
+void loop() {
+  // Read data from the locally connected primary pressure sensor
+  float primaryAltitude = primarySensor.readAltitude();
+
+  // Print the altitude from the primary sensor to the serial monitor
+  Serial.print("Primary Altitude: ");
+  Serial.print(primaryAltitude);
+  Serial.print(" m");
+
+  if (radio.available()) {
+    char combinedMessage[32];
+    radio.read(&combinedMessage, sizeof(combinedMessage));
+
+    String combinedStr = String(combinedMessage);
+    int separatorIndex = combinedStr.indexOf('|');
+    String altitudeStr = combinedStr.substring(separatorIndex + 12, separatorIndex + 20);
+
+    float receivedAltitude = altitudeStr.toFloat();
+
+    // Print the received altitude to the serial monitor
+    Serial.print(", Received Altitude: ");
+    Serial.print(receivedAltitude);
+    Serial.print(" m");
+
+    float altDiff = receivedAltitude - primaryAltitude;
+    Serial.print(", Calculated Altitude: ");
+    Serial.print(altDiff);
+    Serial.print(" m");
+
+  }
+  else{
+    Serial.println(", No received altitude.");
+  }
+  Serial.println();  // Print a newline to separate readings
+  delay(1000);
+}
+
