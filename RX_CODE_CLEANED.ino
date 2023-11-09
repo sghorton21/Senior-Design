@@ -20,7 +20,6 @@ void setup() {
     for(;;);
   }
   delay(2000);
-  // OLED_1.setFont(&FreeMono9pt7b);
   OLED_1.clearDisplay();
   OLED_1.setTextSize(1);             
   OLED_1.setTextColor(WHITE);
