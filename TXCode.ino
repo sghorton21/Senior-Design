@@ -1,5 +1,3 @@
-// Edited 11-10-2023 - CC
-
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -9,12 +7,12 @@ RF24 radio(10, 9); // CE, CSN pins
 Adafruit_DPS310 altTx;
 TwoWire splTx;
 
-float SPL_DRONE, ALT_DRONE;
+float ALT_DRONE, SPL_AVG, SPL_1, SPL_2, SPL_3;
 const byte address[6] = "00001";
 const int DB_REGISTER = 0x0A;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_LOW);
@@ -29,15 +27,15 @@ void setup() {
 void loop() {
   float SPL_1 = GetSPL(0x48);
   float SPL_2 = GetSPL(0x47);
-  float SPL_3 = GetSPL(0x46);
-  float SPL_4 = GetSPL(0x45);
-  float SPL_AVG = (SPL_1 + SPL_2 + SPL_3 + SPL_4) / 4;
+  // float SPL_3 = GetSPL(0x46);
+  float SPL_3 = GetSPL(0x45);
+  SPL_AVG = (SPL_1 + SPL_2 + SPL_3) / 3;
   GetAltitude();
   TransmitData();
   Serial.print("Altitude: ");
   Serial.print(ALT_DRONE);
   Serial.print(" meters | SPL: ");
-  Serial.print(SPL_DRONE);
+  Serial.print(SPL_AVG);
   Serial.println(" dB");
   Serial.println("Drone Altitude and SPL Value Sent");
 }
@@ -47,8 +45,8 @@ float GetSPL(int SPL_ADDRESS) {
   splTx.write(DB_REGISTER);
   splTx.endTransmission(false);
   splTx.requestFrom(SPL_ADDRESS, 1);
-  SPL_DRONE = splTx.read();
-  return SPL_DRONE;
+  SPL = splTx.read();
+  return SPL;
 }
 
 float GetAltitude() {
@@ -59,7 +57,7 @@ float GetAltitude() {
 }
 
 void TransmitData() {
-  String sensorData = "Altitude: " + String(ALT_DRONE, 2) + " meters SPL: " + String(SPL_DRONE);
+  String sensorData = "Altitude: " + String(ALT_DRONE, 2) + " meters SPL: " + String(SPL_AVG);
   // NRF24L01 data transmission
   radio.write(sensorData.c_str(), sensorData.length() + 1);
 }
