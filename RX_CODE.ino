@@ -1,4 +1,4 @@
-// UPDATED 11-11-2023pm 8:15pm - CC
+// UPDATED 11-13-2023 2:42pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -13,15 +13,16 @@ RF24 NRF24L01(9, 10);
 Adafruit_DPS310 DPS310;
 TwoWire SPLMETER;
 
-const int BUTTON_1_PIN = 8;
-const int BUTTON_2_PIN = 7;
-float SPL_DRONE, SPL_GROUND, ALT_DRONE, ALT_GROUND, DELTA_ALT, SPL_PREDICT;
-int BUTTON_1_STATE = 0; 
-int BUTTON_2_STATE = 0;
-int BUTTON_1_LAST_STATE = 0; 
-int BUTTON_2_LAST_STATE = 0;
+const int BUTTON_1_PIN = 7;
+const int BUTTON_2_PIN = 8;
 uint8_t draw_state_1 = 0;
 uint8_t draw_state_2 = 0;
+float SPL_DRONE;
+float SPL_GROUND;
+float ALT_DRONE;
+float ALT_GROUND;
+float DELTA_ALT;
+float SPL_PREDICT;
 
 void OLED_1_page_0() {
   OLED_1.setCursor(0, 10);
@@ -152,24 +153,24 @@ void setup() {
   Serial.begin(115200);
   pinMode(BUTTON_1_PIN, INPUT_PULLUP);
   pinMode(BUTTON_2_PIN, INPUT_PULLUP);
-  OLED_1.setI2CAddress(0x3C);
-  OLED_2.setI2CAddress(0x3D);
-  if (!NRF24L01.begin()) {
-    Serial.println("NRF24L01 connection failed!");
-    for(;;); 
-  }
-  if (!DPS310.begin_I2C(0x77, &Wire)) {
-    Serial.println("DPS310 connection failed!");
-    for(;;);
-  }
-  if(!OLED_1.begin()) { 
-    Serial.println("OLED_1 connection failed");
-    for(;;); 
-  }
-  if(!OLED_2.begin()) { 
-    Serial.println("OLED_2 connection failed");
-    for(;;); 
-  }
+  OLED_1.setI2CAddress(0x3C * 2);
+  OLED_2.setI2CAddress(0x3D * 2);
+  // if (!NRF24L01.begin()) {
+  //   Serial.println("NRF24L01 connection failed!");
+  //   for(;;); 
+  // }
+  // if (!DPS310.begin_I2C(0x77, &Wire)) {
+  //   Serial.println("DPS310 connection failed!");
+  //   for(;;);
+  // }
+  // if(!OLED_1.begin()) { 
+  //   Serial.println("OLED_1 connection failed");
+  //   for(;;); 
+  // }
+  // if(!OLED_2.begin()) { 
+  //   Serial.println("OLED_2 connection failed");
+  //   for(;;); 
+  // }
   OLED_1.begin();
   OLED_1.setFont(u8g2_font_6x10_tf);  
   OLED_2.begin();
@@ -184,6 +185,10 @@ void setup() {
 }
 
 void loop() {
+  uint8_t BUTTON_1_STATE = 0; 
+  uint8_t BUTTON_2_STATE = 0;
+  uint8_t BUTTON_1_LAST_STATE = 0;
+  uint8_t BUTTON_2_LAST_STATE = 0;
   BUTTON_1_STATE = digitalRead(BUTTON_1_PIN);
   BUTTON_2_STATE = digitalRead(BUTTON_2_PIN);
   GetString();
@@ -192,13 +197,14 @@ void loop() {
   DELTA_ALT = ALT_DRONE - ALT_GROUND;
   SPL_PREDICT = SPL_DRONE * 0.4; // placeholder equation
   OLED_1.clearBuffer();
-  OLED_2.clearBuffer();
   UpdateOLED_1();
-  UpdateOLED_2();
   OLED_1.sendBuffer();
+  OLED_2.clearBuffer();
+  UpdateOLED_2();
   OLED_2.sendBuffer();
   if(BUTTON_1_STATE != BUTTON_1_LAST_STATE){
       draw_state_1++;
+      // draw_state_2 = draw_state_1;
       delay(100);
       if(draw_state_1 >= 3) {
         draw_state_1 = 0;
