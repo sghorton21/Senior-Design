@@ -1,3 +1,5 @@
+// Updated 11-14-2023 1:16pm
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -51,26 +53,5 @@ void loop() {
   SPL_1 = GetSPL(0x45);
   SPL_2 = GetSPL(0x47);
   SPL_3 = GetSPL(0x48);
-  // Print altitude and SPL values in Serial Monitor
-  // Serial.print("Altitude: ");
-  // Serial.print(ALT_DRONE);
-  // Serial.print(" meters | SPL: ");
-  // Serial.print(DB);
-  // Serial.println(" dB");
-
-  // Combine sensor data into a string
-
-
-  // Turn on the LED to indicate message transmission
-  digitalWrite(13, HIGH);
-  delay(100); // Optional delay for LED indication
-  digitalWrite(13, LOW);
-
-  delay(1000);
+  GetAlt();
 }
-
-// This code records the altitude and SPL value per second, outputs it to the Serial Monitor, and has an
-// output message indicating the message was sent. There are still issues getting accurate values
-// for the pressure sensor. The next step is configuring the receving end of the NRF24L01 to collect
-// these values and perform calculations for predicted SPL values based on the Reference Altitude and
-// the Drone Altitude.
