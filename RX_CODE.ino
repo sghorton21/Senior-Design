@@ -1,4 +1,4 @@
-// UPDATED 11-14-2023 2:28pm - CC
+// UPDATED 11-14-2023 2:00pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -91,9 +91,9 @@ float ReceiveString() {
   char RECEIVED_DATA[32]; 
   nrf24l01.read(&RECEIVED_DATA, sizeof(RECEIVED_DATA));
   String DATA_STRING = String(RECEIVED_DATA);
-  int SEPARATOR_INDEX = DATA_STRING.indexOf('|'); //Defines the index of | in the receiving string as an integer value
-  String SPL_DATA = DATA_STRING.substring(4, SEPARATOR_INDEX - 3); //Create a new string from the receiving string that contains the SPL value
-  String ALTITUDE_DATA = DATA_STRING.substring(SEPARATOR_INDEX + 12, SEPARATOR_INDEX + 20); 
+  int SEPARATOR_INDEX = DATA_STRING.indexOf('|');
+  String SPL_DATA = DATA_STRING.substring(4, SEPARATOR_INDEX - 3);
+  String ALTITUDE_DATA = DATA_STRING.substring(SEPARATOR_INDEX + 12, SEPARATOR_INDEX + 20);
   SPL_DRONE_AVG = SPL_DATA.toFloat();
   ALT_DRONE = ALTITUDE_DATA.toFloat();
   return SPL_DRONE_AVG, ALT_DRONE;
@@ -128,11 +128,11 @@ void setup() {
   OLED_1.setI2CAddress(0x3C * 2);
   OLED_2.setI2CAddress(0x3D * 2);
   // if (!nrf24l01.begin()) {
-  //   Serial.println("nrf24l01 connection failed!");
+  //   Serial.println("NRF24L01 connection failed!");
   //   for(;;); 
   // }
   // if (!dps310.begin_I2C(0x77, &Wire)) {
-  //   Serial.println("dps310 connection failed!");
+  //   Serial.println("DPS310 connection failed!");
   //   for(;;);
   // }
   // if(!OLED_1.begin()) { 
@@ -175,17 +175,17 @@ void loop() {
   UpdateOLED_2();
   OLED_2.sendBuffer();
   if(BUTTON_1_STATE != BUTTON_1_LAST_STATE){
-      DRAW_STATE_1++;
-      delay(100);
-      if(DRAW_STATE_1 >= 2) {
-        DRAW_STATE_1 = 0;
-      }
+    DRAW_STATE_1++;
+    delay(100);
+    if(DRAW_STATE_1 >= 2) {
+      DRAW_STATE_1 = 0;
+    }
   }  
   if(BUTTON_2_STATE != BUTTON_2_LAST_STATE){
-      DRAW_STATE_2++;
-      delay(100);
-      if(DRAW_STATE_2 >= 2) {
-        DRAW_STATE_2 = 0;
-      }
+    DRAW_STATE_2++;
+    delay(100);
+    if(DRAW_STATE_2 >= 2) {
+      DRAW_STATE_2 = 0;
+    }
   }
 }
