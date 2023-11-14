@@ -1,4 +1,4 @@
-// UPDATED 11-14-2023 2:01pm - CC
+// UPDATED 11-14-2023 2:28pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -17,14 +17,17 @@ const int BUTTON_1_PIN = 7;
 const int BUTTON_2_PIN = 8;
 uint8_t DRAW_STATE_1 = 0;
 uint8_t DRAW_STATE_2 = 0;
-float SPL_DRONE;
+float SPL_DRONE_1;
+float SPL_DRONE_2;
+float SPL_DRONE_3;
+float SPL_DRONE_AVG;
 float SPL_GROUND;
 float ALT_DRONE;
 float ALT_GROUND;
 float DELTA_ALT;
 float SPL_PREDICT;
 
-void OLED_1_page_0() {
+void OLED_1_page_1() {
   OLED_1.setCursor(0, 10);
   OLED_1.print("Drone Altitude: ");
   OLED_1.setCursor(0, 20);
@@ -42,68 +45,39 @@ void OLED_1_page_0() {
   OLED_1.print(" m");
 }
 
-void OLED_1_page_1() {
-  OLED_1.setCursor(0, 10);
-  OLED_1.print("Average Drone SPL: ");
-  OLED_1.setCursor(0, 20);
-  OLED_1.print(SPL_DRONE);
-  OLED_1.print(" dB");
-  OLED_1.setCursor(0, 30);
-  OLED_1.print("Actual Ground SPL: ");
-  OLED_1.setCursor(0, 40);
-  OLED_1.print(SPL_GROUND);
-  OLED_1.print(" dB");
-  OLED_1.setCursor(0, 50);
-  OLED_1.print("Predicted Ground SPL: ");
-  OLED_1.setCursor(0, 60);
+void OLED_1_page_2() {
+  OLED_1.setCursor(0, 27);
+  OLED_1.print("Predicted SPL: ");
+  OLED_1.setCursor(0, 37);
   OLED_1.print(SPL_PREDICT);
   OLED_1.print(" dB");
 }
 
-void OLED_1_page_2() {
-  OLED_1.setCursor(0,10);
-  OLED_1.print("Page 2");
-}
-
-void OLED_2_page_0() {
-  OLED_2.setCursor(0, 10);
-  OLED_2.print("Drone Altitude: ");
-  OLED_2.setCursor(0, 20);
-  OLED_2.print(ALT_DRONE);
-  OLED_2.print(" m");
-  OLED_2.setCursor(0, 30);
-  OLED_2.print("Ground Altitude: ");
-  OLED_2.setCursor(0, 40);
-  OLED_2.print(ALT_GROUND);
-  OLED_2.print(" m");
-  OLED_2.setCursor(0, 50);
-  OLED_2.print("Delta Altitude: ");
-  OLED_2.setCursor(0, 60);
-  OLED_2.print(DELTA_ALT);
-  OLED_2.print(" m");
-}
 
 void OLED_2_page_1() {
   OLED_2.setCursor(0, 10);
-  OLED_2.print("Average Drone SPL: ");
+  OLED_2.print("SPL 1: ");
   OLED_2.setCursor(0, 20);
-  OLED_2.print(SPL_DRONE);
+  OLED_2.print(SPL_DRONE_1);
   OLED_2.print(" dB");
   OLED_2.setCursor(0, 30);
-  OLED_2.print("Actual Ground SPL: ");
+  OLED_2.print("SPL 2");
   OLED_2.setCursor(0, 40);
-  OLED_2.print(SPL_GROUND);
+  OLED_2.print(SPL_DRONE_2));
   OLED_2.print(" dB");
   OLED_2.setCursor(0, 50);
-  OLED_2.print("Predicted Ground SPL: ");
+  OLED_2.print("SPL 3: ");
   OLED_2.setCursor(0, 60);
-  OLED_2.print(SPL_PREDICT);
+  OLED_2.print(SPL_DRONE_3);
   OLED_2.print(" dB");
 }
 
 void OLED_2_page_2() {
-  OLED_2.setCursor(0,10);
-  OLED_2.print("Page 2");
+  OLED_2.setCursor(0, 27);
+  OLED_2.print("Average Drone SPL: ");
+  OLED_2.setCursor(0, 37);
+  OLED_2.print(SPL_DRONE_AVG);
+  OLED_2.print(" dB");
 }
 
 float GetAlt() {
@@ -120,9 +94,9 @@ float ReceiveString() {
   int SEPARATOR_INDEX = DATA_STRING.indexOf('|'); //Defines the index of | in the receiving string as an integer value
   String SPL_DATA = DATA_STRING.substring(4, SEPARATOR_INDEX - 3); //Create a new string from the receiving string that contains the SPL value
   String ALTITUDE_DATA = DATA_STRING.substring(SEPARATOR_INDEX + 12, SEPARATOR_INDEX + 20); 
-  SPL_DRONE = SPL_DATA.toFloat();
+  SPL_DRONE_AVG = SPL_DATA.toFloat();
   ALT_DRONE = ALTITUDE_DATA.toFloat();
-  return SPL_DRONE, ALT_DRONE;
+  return SPL_DRONE_AVG, ALT_DRONE;
 }
 
 float GetSPL(int SPL_ADDRESS) {
@@ -136,14 +110,12 @@ float GetSPL(int SPL_ADDRESS) {
 
 void UpdateOLED_1(void) {
   switch(DRAW_STATE_1) {
-    case 0: OLED_1_page_0(); break;
     case 1: OLED_1_page_1(); break;
     case 2: OLED_1_page_2(); break;
   }
 }
 void UpdateOLED_2(void) {
   switch(DRAW_STATE_2) {
-    case 0: OLED_2_page_0(); break;
     case 1: OLED_2_page_1(); break;
     case 2: OLED_2_page_2(); break;
   }
@@ -195,7 +167,7 @@ void loop() {
   GetAlt();
   GetSPL(0x46);
   DELTA_ALT = ALT_DRONE - ALT_GROUND;
-  SPL_PREDICT = SPL_DRONE * 0.4; // placeholder equation
+  SPL_PREDICT = SPL_DRONE_AVG * 0.4; // placeholder equation
   OLED_1.clearBuffer();
   UpdateOLED_1();
   OLED_1.sendBuffer();
@@ -204,16 +176,15 @@ void loop() {
   OLED_2.sendBuffer();
   if(BUTTON_1_STATE != BUTTON_1_LAST_STATE){
       DRAW_STATE_1++;
-      // DRAW_STATE_2 = DRAW_STATE_1;
       delay(100);
-      if(DRAW_STATE_1 >= 3) {
+      if(DRAW_STATE_1 >= 2) {
         DRAW_STATE_1 = 0;
       }
   }  
   if(BUTTON_2_STATE != BUTTON_2_LAST_STATE){
       DRAW_STATE_2++;
       delay(100);
-      if(DRAW_STATE_2 >= 3) {
+      if(DRAW_STATE_2 >= 2) {
         DRAW_STATE_2 = 0;
       }
   }
