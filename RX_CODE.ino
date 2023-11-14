@@ -1,4 +1,4 @@
-// UPDATED 11-14-2023 2:00pm - CC
+// UPDATED 11-14-2023 2:31pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -63,7 +63,7 @@ void OLED_2_page_1() {
   OLED_2.setCursor(0, 30);
   OLED_2.print("SPL 2");
   OLED_2.setCursor(0, 40);
-  OLED_2.print(SPL_DRONE_2));
+  OLED_2.print(SPL_DRONE_2);
   OLED_2.print(" dB");
   OLED_2.setCursor(0, 50);
   OLED_2.print("SPL 3: ");
