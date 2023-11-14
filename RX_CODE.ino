@@ -1,4 +1,4 @@
-// UPDATED 11-14-2023 2:31pm - CC
+// UPDATED 11-14-2023 3:01pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -15,8 +15,8 @@ TwoWire i2cbus;
 
 const int BUTTON_1_PIN = 7;
 const int BUTTON_2_PIN = 8;
-uint8_t DRAW_STATE_1 = 0;
-uint8_t DRAW_STATE_2 = 0;
+uint8_t DRAW_STATE_1 = 1;
+uint8_t DRAW_STATE_2 = 1;
 float SPL_DRONE_1;
 float SPL_DRONE_2;
 float SPL_DRONE_3;
@@ -46,10 +46,15 @@ void OLED_1_page_1() {
 }
 
 void OLED_1_page_2() {
-  OLED_1.setCursor(0, 27);
+  OLED_1.setCursor(0, 17);
   OLED_1.print("Predicted SPL: ");
-  OLED_1.setCursor(0, 37);
+  OLED_1.setCursor(0, 27);
   OLED_1.print(SPL_PREDICT);
+  OLED_1.print(" dB");
+  OLED_1.setCursor(0, 37);
+  OLED_1.print("Ground SPL: ");
+  OLED_1.setCursor(0, 47);
+  OLED_1.print(SPL_GROUND);
   OLED_1.print(" dB");
 }
 
@@ -73,11 +78,16 @@ void OLED_2_page_1() {
 }
 
 void OLED_2_page_2() {
-  OLED_2.setCursor(0, 27);
+  OLED_2.setCursor(0, 17);
   OLED_2.print("Average Drone SPL: ");
-  OLED_2.setCursor(0, 37);
+  OLED_2.setCursor(0, 27);
   OLED_2.print(SPL_DRONE_AVG);
   OLED_2.print(" dB");
+  OLED_1.setCursor(0, 37);
+  OLED_1.print("Ground SPL: ");
+  OLED_1.setCursor(0, 47);
+  OLED_1.print(SPL_GROUND);
+  OLED_1.print(" dB");
 }
 
 float GetAlt() {
@@ -177,15 +187,15 @@ void loop() {
   if(BUTTON_1_STATE != BUTTON_1_LAST_STATE){
     DRAW_STATE_1++;
     delay(100);
-    if(DRAW_STATE_1 >= 2) {
-      DRAW_STATE_1 = 0;
+    if(DRAW_STATE_1 >= 3) {
+      DRAW_STATE_1 = 1;
     }
   }  
   if(BUTTON_2_STATE != BUTTON_2_LAST_STATE){
     DRAW_STATE_2++;
     delay(100);
-    if(DRAW_STATE_2 >= 2) {
-      DRAW_STATE_2 = 0;
+    if(DRAW_STATE_2 >= 3) {
+      DRAW_STATE_2 = 1;
     }
   }
 }
