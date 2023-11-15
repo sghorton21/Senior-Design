@@ -29,7 +29,11 @@ float GetAlt() {
 }
 
 void SendString() {
-  String DATA_SEND = "Altitude: " + String(ALT_READING, 2) + " meters SPL: " + String(SPL_AVG);
+    String DATA_SEND = "Altitude: " + String(ALT_DRONE, 2) +
+                     " meters SPL_1: " + String(SPL_1, 2) +
+                     " SPL_2: " + String(SPL_2, 2) +
+                     " SPL_3: " + String(SPL_3, 2) +
+                     " Avg SPL: " + String(SPL_AVG, 2);
   nrf24l01.write(DATA_SEND.c_str(), DATA_SEND.length() + 1);
   Serial.println("Drone Altitude and SPL Value Sent");
 }
