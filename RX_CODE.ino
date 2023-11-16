@@ -98,15 +98,20 @@ float GetAlt() {
 }
 
 float ReceiveString() {
-  char RECEIVED_DATA[32]; 
-  nrf24l01.read(&RECEIVED_DATA, sizeof(RECEIVED_DATA));
-  String DATA_STRING = String(RECEIVED_DATA);
-  int SEPARATOR_INDEX = DATA_STRING.indexOf('|');
-  String SPL_DATA = DATA_STRING.substring(4, SEPARATOR_INDEX - 3);
-  String ALTITUDE_DATA = DATA_STRING.substring(SEPARATOR_INDEX + 12, SEPARATOR_INDEX + 20);
-  SPL_DRONE_AVG = SPL_DATA.toFloat();
-  ALT_DRONE = ALTITUDE_DATA.toFloat();
-  return SPL_DRONE_AVG, ALT_DRONE;
+  char RECEIVED_CHAR[32]; 
+  nrf24l01.read(&RECEIVED_CHAR, sizeof(RECEIVED_CHAR));
+  String DATA_RECEIVE = String(RECEIVED_CHAR);
+  String ALT_STRING = DATA_RECEIVE.substring(11, 15);
+  String SPL_1_STRING = DATA_RECEIVE.substring(24, 28);
+  String SPL_2_STRING = DATA_RECEIVE.substring(37, 41);
+  String SPL_3_STRING = DATA_RECEIVE.substring(50, 54);
+  String SPL_DRONE_AVG_STRING = DATA_RECEIVE.substring(65, 69);
+  ALT_DRONE = ALT_STRING.toFloat();
+  SPL_DRONE_1 = SPL_1_STRING.toFloat();
+  SPL_DRONE_2 = SPL_2_STRING.toFloat();
+  SPL_DRONE_3 = SPL_3_STRING.toFloat();
+  SPL_DRONE_AVG = SPL_DRONE_AVG_STRING.toFloat();
+  return SPL_DRONE_1, SPL_DRONE_2, SPL_DRONE_3, SPL_DRONE_AVG, ALT_DRONE;
 }
 
 float GetSPL(int SPL_ADDRESS) {
