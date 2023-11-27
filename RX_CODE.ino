@@ -1,4 +1,4 @@
-// UPDATED 11-14-2023 3:01pm - CC
+// UPDATED 11-26-2023 7:34pm - CC
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -9,7 +9,7 @@
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_1(U8G2_R0, U8X8_PIN_NONE);
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_2(U8G2_R0, U8X8_PIN_NONE);
-RF24 nrf24l01(9, 10);
+RF24 nrf24l01(9, 10); //CE and CS respectively
 Adafruit_DPS310 dps310;
 TwoWire i2cbus;
 
@@ -100,17 +100,17 @@ float GetAlt() {
 float ReceiveString() {
   char RECEIVED_CHAR[32]; 
   nrf24l01.read(&RECEIVED_CHAR, sizeof(RECEIVED_CHAR));
-  String DATA_RECEIVE = String(RECEIVED_CHAR);
-  String ALT_STRING = DATA_RECEIVE.substring(11, 15);
-  String SPL_1_STRING = DATA_RECEIVE.substring(24, 28);
-  String SPL_2_STRING = DATA_RECEIVE.substring(37, 41);
-  String SPL_3_STRING = DATA_RECEIVE.substring(50, 54);
-  String SPL_DRONE_AVG_STRING = DATA_RECEIVE.substring(65, 69);
-  ALT_DRONE = ALT_STRING.toFloat();
-  SPL_DRONE_1 = SPL_1_STRING.toFloat();
-  SPL_DRONE_2 = SPL_2_STRING.toFloat();
-  SPL_DRONE_3 = SPL_3_STRING.toFloat();
-  SPL_DRONE_AVG = SPL_DRONE_AVG_STRING.toFloat();
+  String data_receive = String(RECEIVED_CHAR);
+  String alt_string = data_receive.substring(11, 15);
+  String spl_1_string = data_receive.substring(24, 28);
+  String spl_2_string = data_receive.substring(37, 41);
+  String spl_3_string = data_receive.substring(50, 54);
+  String spl_drone_avg_string = data_receive.substring(65, 69);
+  ALT_DRONE = alt_string.toFloat();
+  SPL_DRONE_1 = spl_1_string.toFloat();
+  SPL_DRONE_2 = spl_2_string.toFloat();
+  SPL_DRONE_3 = spl_3_string.toFloat();
+  SPL_DRONE_AVG = spl_drone_avg_string.toFloat();
   return SPL_DRONE_1, SPL_DRONE_2, SPL_DRONE_3, SPL_DRONE_AVG, ALT_DRONE;
 }
 
@@ -126,12 +126,12 @@ float GetSPL(int SPL_ADDRESS) {
 void UpdateOLED_1(void) {
   switch(DRAW_STATE_1) {
     case 1: OLED_1_page_1(); break;
-    case 2: OLED_1_page_2(); break;
+    case 2: OLED_1_page_1(); break;
   }
 }
 void UpdateOLED_2(void) {
   switch(DRAW_STATE_2) {
-    case 1: OLED_2_page_1(); break;
+    case 1: OLED_2_page_2(); break;
     case 2: OLED_2_page_2(); break;
   }
 }
@@ -181,6 +181,7 @@ void loop() {
   ReceiveString();
   GetAlt();
   GetSPL(0x46);
+  ALT_DRONE = 1.5*ALT_GROUND;
   DELTA_ALT = ALT_DRONE - ALT_GROUND;
   SPL_PREDICT = SPL_DRONE_AVG * 0.4; // placeholder equation
   OLED_1.clearBuffer();
