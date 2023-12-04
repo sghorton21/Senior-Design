@@ -1,224 +1,61 @@
-// UPDATED 11-29-2023 6:53pm - CC
-
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <Wire.h>
-#include <U8g2lib.h>
 #include <Adafruit_DPS310.h>
+#include <Wire.h>
 
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_1(U8G2_R0, U8X8_PIN_NONE);
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C OLED_2(U8G2_R0, U8X8_PIN_NONE);
-RF24 nrf24l01(9,10); //CE and CS respectively
-Adafruit_DPS310 dps310;
+RF24 nrf24l01(9, 10); // CE, CSN pins
+Adafruit_DPS310 dps310_tx;
 TwoWire i2cbus;
-String data_receive;
-char RECEIVED_CHAR[32]; 
 
-const int BUTTON_1_PIN = 7;
-const int BUTTON_2_PIN = 8;
-uint8_t DRAW_STATE_1 = 1;
-uint8_t DRAW_STATE_2 = 1;
-float SPL_DRONE_1;
-float SPL_DRONE_2;
-float SPL_DRONE_3;
-float SPL_DRONE_AVG;
-float SPL_GROUND;
-float ALT_DRONE;
-float ALT_GROUND;
-float DELTA_ALT;
-float NOISE_EMISSION_PREDICT;
-
-void OLED_1_page_1() {
-  OLED_1.setCursor(0, 10);
-  OLED_1.print("Drone Altitude: ");
-  OLED_1.setCursor(0, 20);
-  OLED_1.print(ALT_DRONE);
-  OLED_1.print(" m");
-  OLED_1.setCursor(0, 30);
-  OLED_1.print("Ground Altitude: ");
-  OLED_1.setCursor(0, 40);
-  OLED_1.print(ALT_GROUND);
-  OLED_1.print(" m");
-  OLED_1.setCursor(0, 50);
-  OLED_1.print("Altitude difference: ");
-  OLED_1.setCursor(0, 60);
-  OLED_1.print(DELTA_ALT);
-  OLED_1.print(" m");
-}
-
-void OLED_1_page_2() {
-  OLED_1.setCursor(0, 10);
-  OLED_1.print("Predicted noise: ");
-  OLED_1.setCursor(0, 20);
-  OLED_1.print(NOISE_EMISSION_PREDICT);
-  OLED_1.print(" dB");
-  OLED_1.setCursor(0, 30);
-  OLED_1.print("Measured noise: ");
-  OLED_1.setCursor(0, 40);
-  OLED_1.print(SPL_GROUND);
-  OLED_1.print(" dB");
-  OLED_1.setCursor(0, 50);
-  OLED_1.print("Altitude difference: ");
-  OLED_1.setCursor(0, 60);
-  OLED_1.print(DELTA_ALT);
-  OLED_1.print(" m");
-}
-
-void OLED_2_page_1() {
-  OLED_2.setCursor(0, 10);
-  OLED_2.print("Predicted noise: ");
-  OLED_2.setCursor(0, 20);
-  OLED_2.print(NOISE_EMISSION_PREDICT);
-  OLED_2.print(" dB");
-  OLED_2.setCursor(0, 30);
-  OLED_2.print("Measured noise: ");
-  OLED_2.setCursor(0, 40);
-  OLED_2.print(SPL_GROUND);
-  OLED_2.print(" dB");
-  OLED_2.setCursor(0, 50);
-  OLED_2.print("Altitude difference: ");
-  OLED_2.setCursor(0, 60);
-  OLED_2.print(DELTA_ALT);
-  OLED_2.print(" m");
-}
-
-void OLED_2_page_2() {  
-  OLED_2.setCursor(0, 17);
-  OLED_2.print("Average Drone SPL: ");
-  OLED_2.setCursor(0, 27);
-  OLED_2.print(SPL_DRONE_AVG);
-  OLED_2.print(" dB");
-  OLED_2.setCursor(0, 37);
-  OLED_2.print("Ground SPL: ");
-  OLED_2.setCursor(0, 47);
-  OLED_2.print(SPL_GROUND);
-  OLED_2.print(" dB");
-}
-
-float GetAlt(void) {
-  sensors_event_t temp_event, pressure_event;
-  dps310.getEvents(&temp_event, &pressure_event);
-  ALT_GROUND = dps310.readAltitude(1013.25);
-  return ALT_GROUND;
-}
-
-float ReceiveString() {
-  char RECEIVED_CHAR[32]; 
-  nrf24l01.read(&RECEIVED_CHAR, sizeof(RECEIVED_CHAR));
-  data_receive = String(RECEIVED_CHAR);
-}
-
-float ExtractNrf(int start_index, int end_index) {
-  String string_process = data_receive.substring(start_index, end_index);
-  float FLOAT_RETURN = string_process.toFloat(); 
-  return FLOAT_RETURN;
-}
+float SPL_1, SPL_2, SPL_3, SPL_AVG, ALT_DRONE;
+String DATA_SEND;
 
 float GetSPL(int SPL_ADDRESS) {
   i2cbus.beginTransmission(SPL_ADDRESS);
   i2cbus.write(0x0A);
   i2cbus.endTransmission(false);
   i2cbus.requestFrom(SPL_ADDRESS, 1);
-  SPL_GROUND = i2cbus.read();
-  return SPL_GROUND;
+  float SPL_READING = i2cbus.read();
+  return SPL_READING;
 }
 
-float SplAvg() {  
-  float spl = (SPL_DRONE_1 + SPL_DRONE_2 + SPL_DRONE_3) / 3;
-  return spl;
-}
-float SplPredict() {
-  float spl_return = SPL_DRONE_AVG - abs(10*log(0.10 / DELTA_ALT));
-  return spl_return;
+float GetAlt() {
+  sensors_event_t temp_event, pressure_event;
+  dps310_tx.getEvents(&temp_event, &pressure_event);
+  ALT_DRONE = dps310_tx.readAltitude(1013.25);
+  return ALT_DRONE;
 }
 
-void UpdateOLED_1(void) {
-  switch(DRAW_STATE_1) {
-    case 1: OLED_1_page_1(); break;
-    case 2: OLED_1_page_2(); break;
-  }
-}
-void UpdateOLED_2(void) {
-  switch(DRAW_STATE_2) {
-    case 1: OLED_2_page_1(); break;
-    case 2: OLED_2_page_2(); break;
-  }
+void SendString() {
+  DATA_SEND =  String(ALT_DRONE, 2) + " | " +
+               String(SPL_AVG);
+  nrf24l01.write(DATA_SEND.c_str(), DATA_SEND.length() + 1);
+  // Serial.println(DATA_SEND.length());
+  // Serial.println("Drone Altitude and SPL Value Sent");
 }
 
-void setup(void) {
+
+void setup() {
   Serial.begin(9600);
-  pinMode(BUTTON_1_PIN, INPUT_PULLUP);
-  pinMode(BUTTON_2_PIN, INPUT_PULLUP);
-  OLED_1.setI2CAddress(0x3C * 2);
-  OLED_2.setI2CAddress(0x3D * 2);
-  // if (!nrf24l01.begin()) {
-  //   Serial.println("NRF24L01 connection failed!");
-  //   for(;;); 
-  // }
-  // if (!dps310.begin_I2C(0x77, &Wire)) {
-  //   Serial.println("DPS310 connection failed!");
-  //   for(;;);
-  // }
-  // if(!OLED_1.begin()) { 
-  //   Serial.println("OLED_1 connection failed");
-  //   for(;;); 
-  // }
-  // if(!OLED_2.begin()) { 
-  //   Serial.println("OLED_2 connection failed");
-  //   for(;;); 
-  // }
-  OLED_1.begin();
-  OLED_1.setFont(u8g2_font_6x10_tf);  
-  OLED_2.begin();
-  OLED_2.setFont(u8g2_font_6x10_tf);
-  dps310.begin_I2C(0x77, &Wire);
-  dps310.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
-  dps310.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
   nrf24l01.begin();
   nrf24l01.setDataRate(RF24_2MBPS);
   nrf24l01.setPALevel(RF24_PA_HIGH);
-  nrf24l01.openReadingPipe(1, 0xF0F0F0F0F0);
-  nrf24l01.startListening();
+  nrf24l01.stopListening();
+  nrf24l01.openWritingPipe(0xF0F0F0F0F0);
+  dps310_tx.begin_I2C(0x77, &Wire);
+  dps310_tx.configurePressure(DPS310_64HZ, DPS310_64SAMPLES);
+  dps310_tx.configureTemperature(DPS310_64HZ, DPS310_64SAMPLES);
+  i2cbus.begin();
+  // pinMode(13, OUTPUT); // Set pin 13 as output for the LED
 }
 
-void loop(void) {
-  uint8_t BUTTON_1_STATE = 0; 
-  uint8_t BUTTON_2_STATE = 0;
-  uint8_t BUTTON_1_LAST_STATE = 0;
-  uint8_t BUTTON_2_LAST_STATE = 0;
-  BUTTON_1_STATE = digitalRead(BUTTON_1_PIN);
-  BUTTON_2_STATE = digitalRead(BUTTON_2_PIN);
-  ReceiveString();
-  // Serial.println(data_receive);
-  // nrf24l01.read(&RECEIVED_CHAR, sizeof(RECEIVED_CHAR));
-  // data_receive = String(RECEIVED_CHAR);
-  Serial.println(data_receive);
+void loop() {
+  SPL_1 = GetSPL(0x45);
+  SPL_2 = GetSPL(0x47);
+  SPL_3 = GetSPL(0x48);
+  SPL_AVG = (SPL_1 + SPL_2 + SPL_3) / 3;
   GetAlt();
-  GetSPL(0x46);
-  ALT_DRONE = ExtractNrf(0,6);
-  SPL_DRONE_AVG = ExtractNrf(9,14);
-  DELTA_ALT = ALT_DRONE - ALT_GROUND;
-  // SPL_DRONE_AVG = SplAvg();
-  NOISE_EMISSION_PREDICT = SplPredict();
-  OLED_1.clearBuffer();
-  UpdateOLED_1();
-  OLED_1.sendBuffer();
-  OLED_2.clearBuffer();
-  UpdateOLED_2();
-  OLED_2.sendBuffer();
-  if(BUTTON_1_STATE != BUTTON_1_LAST_STATE){
-    DRAW_STATE_1++;
-    delay(100);
-    if(DRAW_STATE_1 >= 3) {
-      DRAW_STATE_1 = 1;
-    }
-  }  
-  if(BUTTON_2_STATE != BUTTON_2_LAST_STATE){
-    DRAW_STATE_2++;
-    delay(100);
-    if(DRAW_STATE_2 >= 3) {
-      DRAW_STATE_2 = 1;
-    }
-  }
+  SendString();
+  Serial.println(DATA_SEND);
 }
